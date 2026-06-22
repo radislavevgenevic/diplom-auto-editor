@@ -204,21 +204,12 @@ export const useEditorStore = create((set, get) => ({
   exportJSON: () => {
     const s = get()
 
-    const stripPreview = (blocks) =>
-      (blocks || []).map((block) => {
-        if (block.type === 'image') {
-          const { _dataURL, ...rest } = block
-          return rest
-        }
-        return block
-      })
-
     const cleanSection = (section) => ({
       ...section,
-      content: stripPreview(section.content),
+      content: section.content,
       subsections: (section.subsections || []).map((sub) => ({
         ...sub,
-        content: stripPreview(sub.content),
+        content: sub.content,
       })),
     })
 
@@ -231,9 +222,9 @@ export const useEditorStore = create((set, get) => ({
       name_nor: s.name_nor,
       year: s.year,
       template: s.template || 'D',
-      introduction: stripPreview(s.introduction),
+      introduction: s.introduction,
       sections: s.sections.map(cleanSection),
-      conclusion: stripPreview(s.conclusion),
+      conclusion: s.conclusion,
       reference: s.reference,
     }
   },

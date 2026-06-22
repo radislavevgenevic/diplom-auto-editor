@@ -585,7 +585,9 @@ def render_block(doc, anchor, block):
                 run.text = f"[Ошибка загрузки изображения: {str(e)}]"
         else:
             run = pic_p.add_run()
-            run.text = f"[Изображение не найдено: {img_path}]"
+            proj_dir = os.environ.get("PROJECT_DIR", "None")
+            cwd = os.getcwd()
+            run.text = f"[Изображение не найдено. Имя: {img_path}. CWD: {cwd}. PROJECT_DIR: {proj_dir}]"
 
         # 3. Пустая строка Normal
         empty_p_after = insert_after(pic_p, "", "Normal")
