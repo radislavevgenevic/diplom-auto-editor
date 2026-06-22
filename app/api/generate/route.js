@@ -45,7 +45,11 @@ export async function POST(request) {
     // 6. Запускаем generate.py в контексте временной папки (cwd: tempDir)
     let stderr = ''
     const runPython = (cmd) => {
-      execSync(cmd, { cwd: tempDir, timeout: 120_000 })
+      execSync(cmd, { 
+        cwd: tempDir, 
+        timeout: 120_000,
+        env: { ...process.env, PROJECT_DIR: process.cwd() }
+      })
     }
 
     try {

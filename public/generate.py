@@ -166,7 +166,7 @@ def replace_xml_placeholders(template_path, output_path, data):
                     archive_name = os.path.relpath(
                         full_path,
                         temp_dir
-                    )
+                    ).replace("\\", "/")
                     zip_out.write(
                         full_path,
                         archive_name
@@ -568,10 +568,18 @@ def render_block(doc, anchor, block):
             if img_path.startswith("./"):
                 img_path = img_path[2:]
 
-        if img_path and os.path.exists(img_path):
+        resolved_path = img_path
+        if not (resolved_path and os.path.exists(resolved_path)):
+            proj_dir = os.environ.get("PROJECT_DIR")
+            if proj_dir:
+                alt_path = os.path.join(proj_dir, img_path)
+                if os.path.exists(alt_path):
+                    resolved_path = alt_path
+
+        if resolved_path and os.path.exists(resolved_path):
             try:
                 run = pic_p.add_run()
-                run.add_picture(img_path, width=Cm(15))
+                run.add_picture(resolved_path, width=Cm(15))
             except Exception as e:
                 run = pic_p.add_run()
                 run.text = f"[Ошибка загрузки изображения: {str(e)}]"
