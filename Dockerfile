@@ -52,8 +52,6 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/generate.py ./generate.py
-COPY --from=builder /app/template*.docx ./
 
 EXPOSE 3000
 

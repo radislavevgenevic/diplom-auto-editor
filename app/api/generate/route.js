@@ -16,13 +16,13 @@ export async function POST(request) {
     const resultFile = path.join(tempDir, 'result.docx')
 
     // 2. Копируем скрипт generate.py во временную папку
-    const srcScript = path.join(/*turbopackIgnore: true*/ process.cwd(), 'generate.py')
+    const srcScript = path.join(process.cwd(), 'public', 'generate.py')
     fs.copyFileSync(srcScript, path.join(tempDir, 'generate.py'))
 
     // 3. Копируем все шаблоны template*.docx во временную папку
     const templates = ['templateD.docx', 'templateK.docx', 'templateO.docx']
     for (const tpl of templates) {
-      const srcTpl = path.join(/*turbopackIgnore: true*/ process.cwd(), tpl)
+      const srcTpl = path.join(process.cwd(), 'public', tpl)
       if (fs.existsSync(srcTpl)) {
         fs.copyFileSync(srcTpl, path.join(tempDir, tpl))
       }
