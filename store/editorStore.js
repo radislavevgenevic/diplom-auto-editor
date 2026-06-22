@@ -243,6 +243,7 @@ export const useEditorStore = create((set, get) => ({
       })
     }
 
+    fromBlocks(s.introduction)
     s.sections.forEach((section) => {
       fromBlocks(section.content)
       ;(section.subsections || []).forEach((sub) => fromBlocks(sub.content))
