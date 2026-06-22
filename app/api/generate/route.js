@@ -3,7 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import os from 'os'
 import { execSync } from 'child_process'
-import { getSessionUser, readUsers, writeUsers } from '../../../../lib/db'
+import { getSessionUser, readUsers, writeUsers } from '../../../lib/db'
 
 export async function POST(request) {
   let tempDir = null
