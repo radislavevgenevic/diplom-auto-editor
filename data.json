@@ -1,0 +1,56 @@
+{
+  "special": "Программное обеспечение",
+  "theme": "Разработка веб-приложения",
+  "group": "ПО-41",
+  "name": "Ткаченко Р.Е.",
+  "name_teacher": "Колокольцев Е.А.",
+  "name_nor": "",
+  "year": "2026",
+  "template": "K",
+  "introduction": [
+    {
+      "type": "text",
+      "text": "фывфывфы"
+    }
+  ],
+  "sections": [
+    {
+      "title": {
+        "type": "paragraph1",
+        "text": "1 Новый раздел"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "вфывфыв"
+        }
+      ],
+      "subsections": [
+        {
+          "title": {
+            "type": "paragraph2",
+            "text": "1.1 Новый подраздел"
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "фыввфыв"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "conclusion": [
+    {
+      "type": "text",
+      "text": "вфывфывфы"
+    }
+  ],
+  "reference": [
+    {
+      "text": "1",
+      "url": "1"
+    }
+  ]
+}
