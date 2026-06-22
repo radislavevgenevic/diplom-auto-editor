@@ -1,21 +1,17 @@
 import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
-import os from 'os'
+import { getSessionUser, getUserFiles } from '../../../lib/db'
 
 export async function POST(request) {
   try {
-    const { data, images } = await request.json()
-    
-    // Пытаемся сохранить на Рабочий стол, если папка существует. Если нет — сохраняем в корень проекта.
-    const userProfile = process.env.USERPROFILE || process.env.HOME || ''
-    let dataDir = path.join(userProfile, 'Desktop', 'diplom-auto-editor')
-    
-    if (!fs.existsSync(dataDir)) {
-      dataDir = process.cwd()
+    const user = getSessionUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Пожалуйста, войдите в систему' }, { status: 401 })
     }
-    
-    const imagesDir = path.join(dataDir, 'images')
+
+    const { data, images } = await request.json()
+    const { dataFile, imagesDir } = getUserFiles(user.username)
 
     // Сохраняем изображения
     if (images && images.length > 0) {
@@ -28,9 +24,9 @@ export async function POST(request) {
       }
     }
 
-    // Сохраняем data.json
+    // Сохраняем data_[username].json
     fs.writeFileSync(
-      path.join(dataDir, 'data.json'),
+      dataFile,
       JSON.stringify(data, null, 2),
       'utf-8'
     )
@@ -40,3 +36,4 @@ export async function POST(request) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
+

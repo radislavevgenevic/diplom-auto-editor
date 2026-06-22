@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1",
+    "username": "admin",
+    "passwordHash": "a96a40149024f92d057a661cd718a38b341f486c99c5dbf5e7f1e40a02f37c35",
+    "role": "admin",
+    "generationsLeft": "infinite",
+    "sessionToken": null
+  },
+  {
+    "id": "2",
+    "username": "teacher",
+    "passwordHash": "c2003dc15cf3fb153833b379bfbe121bbbf0bf37b8a7db30058b73a25c19207e",
+    "role": "teacher",
+    "generationsLeft": 10,
+    "sessionToken": null
+  },
+  {
+    "id": "3",
+    "username": "student",
+    "passwordHash": "a32431713d80e9095f9c490db02e7cb35b0d01d4a0a4c2810e7b7fdf139268f7",
+    "role": "student",
+    "generationsLeft": 3,
+    "sessionToken": null
+  }
+]

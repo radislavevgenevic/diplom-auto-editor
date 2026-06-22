@@ -3,14 +3,38 @@ import fs from 'fs'
 import path from 'path'
 import os from 'os'
 import { execSync } from 'child_process'
+import { getSessionUser, readUsers, writeUsers } from '../../../../lib/db'
 
 export async function POST(request) {
   let tempDir = null
   try {
+    const user = getSessionUser(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Пожалуйста, войдите в систему' }, { status: 401 })
+    }
+
+    // Проверка лимитов генераций
+    const users = readUsers()
+    const dbUser = users.find(u => u.id === user.id)
+    if (!dbUser) {
+      return NextResponse.json({ error: 'Пользователь не найден' }, { status: 404 })
+    }
+
+    if (dbUser.generationsLeft !== 'infinite') {
+      const left = parseInt(dbUser.generationsLeft, 10)
+      if (isNaN(left) || left <= 0) {
+        return NextResponse.json({ error: 'LIMIT_EXCEEDED', message: 'У вас закончились доступные генерации' }, { status: 403 })
+      }
+      // Декрементируем
+      dbUser.generationsLeft = left - 1
+      writeUsers(users)
+    }
+
     const { data, images } = await request.json()
 
     // 1. Создаем уникальную временную папку в ОС для предотвращения конфликтов параллельных запросов
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'docx-gen-'))
+
     const imagesDir = path.join(tempDir, 'images')
     const dataFile  = path.join(tempDir, 'data.json')
     const resultFile = path.join(tempDir, 'result.docx')

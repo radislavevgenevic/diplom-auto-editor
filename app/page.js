@@ -6,6 +6,9 @@ import Sidebar from '../components/Sidebar'
 import BlockEditor from '../components/BlockEditor'
 import SearchReplacePanel from '../components/SearchReplacePanel'
 import { useEditorStore } from '../store/editorStore'
+import AuthScreen from '../components/AuthScreen'
+import AdminDashboard from '../components/AdminDashboard'
+import TelegramPaymentModal from '../components/TelegramPaymentModal'
 
 // ── Mobile bottom nav icons ──
 const NAV_ITEMS = [
@@ -55,8 +58,33 @@ function MobileBottomNav({ onOpenSidebar }) {
 }
 
 export default function Home() {
+  const { user, setUser, adminOpen, setAdminOpen, payModalOpen, setPayModalOpen, loadFromJSON } = useEditorStore()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
+
+  // Проверка активной сессии при запуске
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch('/api/auth/me')
+        const data = await res.json()
+        if (data.user) {
+          setUser(data.user)
+          // Загружаем данные пользователя
+          const loadRes = await fetch('/api/load')
+          if (loadRes.ok) {
+            loadFromJSON(await loadRes.json())
+          }
+        }
+      } catch (err) {
+        console.error('Ошибка проверки сессии:', err)
+      } finally {
+        setInitialLoading(false)
+      }
+    }
+    checkSession()
+  }, [setUser, loadFromJSON])
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)')
@@ -66,9 +94,55 @@ export default function Home() {
     return () => mq.removeEventListener('change', handler)
   }, [])
 
+  // Обработка успешного входа
+  const handleAuthSuccess = async (loggedInUser) => {
+    setUser(loggedInUser)
+    setInitialLoading(true)
+    try {
+      const loadRes = await fetch('/api/load')
+      if (loadRes.ok) {
+        loadFromJSON(await loadRes.json())
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setInitialLoading(false)
+    }
+  }
+
   // Close sidebar when selecting on mobile
   const handleSidebarSelect = () => {
     if (isMobile) setSidebarOpen(false)
+  }
+
+  if (initialLoading) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        background: 'var(--bg-0)',
+        color: 'var(--text-2)',
+        fontSize: 14,
+        flexDirection: 'column',
+        gap: 12
+      }}>
+        <div style={{
+          width: 32, height: 32,
+          border: '3px solid rgba(99,102,241,0.2)',
+          borderTop: '3px solid var(--accent-1)',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <span>Подключение...</span>
+      </div>
+    )
+  }
+
+  // Если не авторизован, показываем экран входа/регистрации
+  if (!user) {
+    return <AuthScreen onAuthSuccess={handleAuthSuccess} />
   }
 
   return (
@@ -151,6 +225,11 @@ export default function Home() {
 
       {/* Global search/replace overlay */}
       <SearchReplacePanel />
+
+      {/* Modals */}
+      {adminOpen && <AdminDashboard onClose={() => setAdminOpen(false)} />}
+      {payModalOpen && <TelegramPaymentModal onClose={() => setPayModalOpen(false)} />}
     </div>
   )
 }
+

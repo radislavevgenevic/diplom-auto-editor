@@ -26,10 +26,17 @@ export const useEditorStore = create((set, get) => ({
 
   // UI state
   selectedPath: 'metadata', // 'metadata' | 'introduction' | 'conclusion' | 'reference' | { si, subi? }
+  user: null,
+  adminOpen: false,
+  payModalOpen: false,
 
+  setUser: (user) => set({ user }),
+  setAdminOpen: (val) => set({ adminOpen: val }),
+  setPayModalOpen: (val) => set({ payModalOpen: val }),
   setSelectedPath: (path) => set({ selectedPath: path }),
   setSearchOpen: (val) => set({ searchOpen: val }),
   updateField: (key, value) => set({ [key]: value }),
+
 
   // ─── Sections ──────────────────────────────────────────────────────────────
   addSection: () => {

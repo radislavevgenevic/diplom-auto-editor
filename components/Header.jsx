@@ -13,7 +13,10 @@ const spinnerStyle = {
 }
 
 export default function Header({ onOpenSidebar }) {
-  const { loadFromJSON, exportJSON, collectImages, undo, redo, past, future, searchOpen, setSearchOpen } = useEditorStore()
+  const { 
+    loadFromJSON, exportJSON, collectImages, undo, redo, past, future, searchOpen, setSearchOpen,
+    user, setUser, setAdminOpen, setPayModalOpen 
+  } = useEditorStore()
   const [status, setStatus]           = useState(null)
   const [generating, setGenerating]   = useState(false)
   const [undoPulse, setUndoPulse]     = useState(false)
@@ -64,6 +67,17 @@ export default function Header({ onOpenSidebar }) {
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [undo, redo, searchOpen, setSearchOpen])
+
+  const handleLogout = async () => {
+    setMoreOpen(false)
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      setUser(null)
+      flash('Вы вышли из системы')
+    } catch {
+      flash('Ошибка выхода из системы', false)
+    }
+  }
 
   const handleLoadProject = async () => {
     setMoreOpen(false)
@@ -121,6 +135,16 @@ export default function Header({ onOpenSidebar }) {
 
   const handleGenerate = async () => {
     setMoreOpen(false)
+    
+    // Проверка локального лимита
+    if (user && user.generationsLeft !== 'infinite') {
+      const left = parseInt(user.generationsLeft, 10)
+      if (isNaN(left) || left <= 0) {
+        setPayModalOpen(true)
+        return
+      }
+    }
+
     setGenerating(true)
     setStatus({ text: '⏳ Генерация...', ok: true })
     try {
@@ -131,9 +155,21 @@ export default function Header({ onOpenSidebar }) {
       })
       if (!res.ok) {
         const err = await res.json()
-        flash(`❌ ${err.error}`, false)
+        if (err.error === 'LIMIT_EXCEEDED') {
+          setPayModalOpen(true)
+          flash('❌ Недостаточно генераций', false)
+        } else {
+          flash(`❌ ${err.error}`, false)
+        }
         return
       }
+      
+      // Декрементируем локальный лимит после успешного скачивания
+      if (user && user.generationsLeft !== 'infinite') {
+        const left = parseInt(user.generationsLeft, 10)
+        setUser({ ...user, generationsLeft: Math.max(0, left - 1) })
+      }
+
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)
       Object.assign(document.createElement('a'), { href: url, download: 'result.docx' }).click()
@@ -270,6 +306,23 @@ export default function Header({ onOpenSidebar }) {
                     boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
                     animation: 'moreMenuIn 0.15s ease',
                   }}>
+                    {/* Информация о пользователе */}
+                    {user && (
+                      <div style={{
+                        padding: '6px 8px',
+                        borderBottom: '1px solid var(--border)',
+                        marginBottom: 6,
+                        fontSize: 12
+                      }}>
+                        <div style={{ fontWeight: 600, color: 'var(--text-1)', marginBottom: 2 }}>
+                          {user.role === 'admin' ? '👑' : user.role === 'teacher' ? '💼' : '🎓'} {user.username}
+                        </div>
+                        <div style={{ color: user.generationsLeft === 'infinite' ? 'var(--green)' : 'var(--text-3)', fontSize: 10 }}>
+                          Генерации: {user.generationsLeft === 'infinite' ? 'Безлимит' : `${user.generationsLeft} шт.`}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Undo/Redo row */}
                     <div style={{
                       display: 'flex', gap: 6, padding: '6px 8px',
@@ -289,11 +342,29 @@ export default function Header({ onOpenSidebar }) {
                       >↪ Вернуть</button>
                     </div>
 
+                    {user?.role === 'admin' && (
+                      <button
+                        className="popup-item"
+                        onClick={() => { setAdminOpen(true); setMoreOpen(false) }}
+                        style={{ color: 'var(--accent-2)', fontWeight: 600 }}
+                      >
+                        👑 Админка
+                      </button>
+                    )}
+
                     <label className="popup-item" style={{ cursor: 'pointer' }}>
                       📁 Открыть файл
                       <input type="file" accept=".json" onChange={handleOpenFile} style={{ display: 'none' }} />
                     </label>
                     <button className="popup-item" onClick={handleDownload}>⬇ Скачать JSON</button>
+
+                    <button
+                      className="popup-item"
+                      onClick={handleLogout}
+                      style={{ color: 'var(--red)', borderTop: '1px solid var(--border)', marginTop: 4, paddingTop: 8 }}
+                    >
+                      🚪 Выйти
+                    </button>
                   </div>
                 </>
               )}
@@ -357,6 +428,36 @@ export default function Header({ onOpenSidebar }) {
             <button className="btn btn-ghost" onClick={handleDownload} title="Скачать data.json">
               ⬇ JSON
             </button>
+
+            {/* Профиль пользователя и управление */}
+            {user && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, borderRight: '1px solid var(--border)', paddingRight: 14, marginLeft: 8 }}>
+                <div style={{ fontSize: 13, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.2 }}>
+                  <span style={{ fontWeight: 600, color: 'var(--text-1)' }}>
+                    {user.role === 'admin' ? '👑' : user.role === 'teacher' ? '💼' : '🎓'} {user.username}
+                  </span>
+                  <span style={{ fontSize: 11, color: user.generationsLeft === 'infinite' ? 'var(--green)' : 'var(--text-3)' }}>
+                    {user.generationsLeft === 'infinite' ? 'Безлимит' : `Генерации: ${user.generationsLeft}`}
+                  </span>
+                </div>
+                {user.role === 'admin' && (
+                  <button
+                    className="btn btn-ghost"
+                    onClick={() => setAdminOpen(true)}
+                    style={{ padding: '5px 10px', fontSize: 11, background: 'rgba(99,102,241,0.15)', borderColor: 'rgba(99,102,241,0.3)', color: 'var(--text-1)' }}
+                  >
+                    Админка
+                  </button>
+                )}
+                <button
+                  className="btn btn-ghost"
+                  onClick={handleLogout}
+                  style={{ padding: '5px 10px', fontSize: 11, color: 'var(--red)' }}
+                >
+                  Выйти
+                </button>
+              </div>
+            )}
 
             <button
               className="btn btn-primary"
